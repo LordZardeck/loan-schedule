@@ -20,177 +20,166 @@ import {
 	addDays,
 } from 'date-fns'
 
-export abstract class AbstractLoanSchedule<Payment extends LSPayment = LSPayment> {
-	decimal = 2
-	prodCalendar: ProdCal | null = null
+export function createInitialPayment(amount: Decimal.Value, paymentDate: Date, rate: Decimal.Value): LSPayment {
+	return {
+		paymentDate,
+		initialBalance: new Decimal(0),
+		paymentAmount: new Decimal(0),
+		interestAmount: new Decimal(0),
+		principalAmount: new Decimal(0),
+		finalBalance: new Decimal(amount),
+		interestRate: new Decimal(rate),
+	}
+}
 
-	constructor(options?: LSOptions) {
-		if (options) {
-			this.decimal = options.decimalDigit || this.decimal
-			// TODO: Remove prod calendar
-			if (options.prodCalendar) this.prodCalendar = new ProdCal(options.prodCalendar)
+export function getInterestByPeriod({ rate, to, from, amount }: LSInterestByPeriodParameters): Decimal {
+	return new Decimal(rate)
+		.div(100)
+		.div(to.getFullYear() % 4 === 0 ? 366 : 365)
+		.mul(differenceInDays(to, from))
+		.mul(amount)
+}
+
+export function getPaymentDate(issueDate: Date, scheduleMonth: number, paymentDay: number): Date {
+	const paymentDate = addMonths(startOfMonth(issueDate), scheduleMonth)
+	const paymentEndOfMonth = endOfMonth(paymentDate)
+
+	return setDate(
+		paymentDate,
+		// If the payment day is not available in the month, then use the last day of the month
+		paymentEndOfMonth.getDate() < paymentDay ? paymentEndOfMonth.getDate() : paymentDay,
+	)
+}
+
+export function createHolidayChecker(prodCalendar: ProdCal) {
+	return (date: Date): boolean =>
+		prodCalendar.getDay(date.getFullYear(), date.getMonth() + 1, date.getDate()) === ProdCal.DAY_HOLIDAY
+}
+
+export function getPaymentDateOnWorkingDay(paymentDate: Date, isHoliday?: (date: Date) => boolean): Date {
+	let paymentDateOnWorkingDay = new Date(paymentDate)
+	let amount = 1
+
+	while (isHoliday?.(paymentDateOnWorkingDay)) {
+		paymentDateOnWorkingDay = addDays(paymentDateOnWorkingDay, amount)
+
+		if (paymentDateOnWorkingDay.getMonth() !== paymentDate.getMonth()) {
+			amount = -1
+			paymentDateOnWorkingDay = addDays(paymentDateOnWorkingDay, amount)
 		}
 	}
 
-	abstract generatePayments(parameters: LSParameters): Payment[]
+	return paymentDateOnWorkingDay
+}
 
-	calculateSchedule(parameters: LSParameters, payments?: Payment[]): LSSchedule<Payment> {
-		const schedulePayments = payments ?? this.generatePayments(parameters)
+export function getSchedulePoint(paymentDate: Date, paymentType: PaymentType, paymentAmount: Decimal.Value) {
+	return { paymentDate: getPaymentDateOnWorkingDay(paymentDate), paymentType, paymentAmount }
+}
 
-		const initialPayment = schedulePayments.at(0)
-		const firstPayment = schedulePayments.at(1)
-		const lastPayment = schedulePayments.at(-1)
+export function calculateInterestByPeriod(
+	{ amount, rate, from, to }: LSInterestParameters,
+	options?: LSOptions,
+): Decimal.Value {
+	const fixedDecimal = options?.decimalDigit ?? 2
 
-		if (initialPayment === undefined || firstPayment === undefined || lastPayment === undefined)
-			throw new Error('There must exist at least two payments to apply final calculation')
-
-		const minPaymentAmount = Decimal.min(firstPayment.paymentAmount, lastPayment.paymentAmount).toFixed(
-			this.decimal,
-		)
-		const maxPaymentAmount = Decimal.max(firstPayment.paymentAmount, lastPayment.paymentAmount).toFixed(
-			this.decimal,
-		)
-
-		const dateStart = setDate(initialPayment.paymentDate, 1)
-		const dateEnd = setDate(lastPayment.paymentDate, 1)
-
-		// TODO: Validate that the difference in months is rounded correctly. Currently it is truncated.
-		const term = differenceInMonths(dateEnd, dateStart)
-
-		const amount = new Decimal(parameters.amount).toFixed(this.decimal)
-		const overAllInterest = schedulePayments.reduce(
-			(overAllInterest, pay) => new Decimal(overAllInterest).plus(pay.interestAmount).toFixed(this.decimal),
-			new Decimal(0).toFixed(this.decimal),
-		)
-
-		const efficientRate = new Decimal(overAllInterest).div(amount).mul(100).toFixed(this.decimal)
-		const fullAmount = new Decimal(overAllInterest).add(amount).toFixed(this.decimal)
-
-		return {
-			minPaymentAmount,
-			maxPaymentAmount,
-			term,
-			amount,
-			overAllInterest,
-			efficientRate,
-			fullAmount,
-			payments: schedulePayments,
-		}
-	}
-
-	getInitialPayment(amount: Decimal.Value, paymentDate: Date, rate: Decimal.Value): LSPayment {
-		return {
-			paymentDate,
-			initialBalance: new Decimal(0),
-			paymentAmount: new Decimal(0),
-			interestAmount: new Decimal(0),
-			principalAmount: new Decimal(0),
-			finalBalance: new Decimal(amount),
-			interestRate: new Decimal(rate),
-		}
-	}
-
-	calculateInterestByPeriod({ amount, rate, from, to }: LSInterestParameters): Decimal.Value {
-		if (isSameYear(from, to)) {
-			return new Decimal(0)
-				.plus(
-					this.getInterestByPeriod({
-						from,
-						to,
-						amount,
-						rate,
-					}),
-				)
-				.toFixed(this.decimal)
-		}
-
-		const endOfYear = new Date(from.getFullYear(), 11, 31)
-
+	if (isSameYear(from, to)) {
 		return new Decimal(0)
 			.plus(
-				this.getInterestByPeriod({
+				getInterestByPeriod({
 					from,
-					to: endOfYear,
-					amount,
-					rate,
-				}),
-			)
-			.plus(
-				this.getInterestByPeriod({
-					from: endOfYear,
 					to,
 					amount,
 					rate,
 				}),
 			)
-			.toFixed(this.decimal)
+			.toFixed(fixedDecimal)
 	}
 
-	getInterestByPeriod({ rate, to, from, amount }: LSInterestByPeriodParameters): Decimal {
-		return new Decimal(rate)
-			.div(100)
-			.div(to.getFullYear() % 4 === 0 ? 366 : 365)
-			.mul(differenceInDays(to, from))
-			.mul(amount)
-	}
+	const endOfYear = new Date(from.getFullYear(), 11, 31)
 
-	addMonths(number: number, date: Date, paymentOnDay: number): Date {
-		const paymentDate = addMonths(startOfMonth(date), number)
-		const paymentEndOfMonth = endOfMonth(paymentDate)
-
-		return setDate(
-			paymentDate,
-			paymentEndOfMonth.getDate() < paymentOnDay ? paymentEndOfMonth.getDate() : paymentOnDay,
+	return new Decimal(0)
+		.plus(
+			getInterestByPeriod({
+				from,
+				to: endOfYear,
+				amount,
+				rate,
+			}),
 		)
-	}
-
-	isHoliday(date: Date): boolean {
-		return (
-			this.prodCalendar?.getDay(date.getFullYear(), date.getMonth() + 1, date.getDate()) === ProdCal.DAY_HOLIDAY
+		.plus(
+			getInterestByPeriod({
+				from: endOfYear,
+				to,
+				amount,
+				rate,
+			}),
 		)
+		.toFixed(fixedDecimal)
+}
+
+export function calculateSchedule<Payment extends LSPayment = LSPayment>(
+	parameters: LSParameters,
+	schedulePayments: Payment[],
+	options?: LSOptions,
+): LSSchedule<Payment> {
+	const fixedDecimal = options?.decimalDigit ?? 2
+
+	const initialPayment = schedulePayments.at(0)
+	const firstPayment = schedulePayments.at(1)
+	const lastPayment = schedulePayments.at(-1)
+
+	if (initialPayment === undefined || firstPayment === undefined || lastPayment === undefined)
+		throw new Error('There must exist at least two payments to apply final calculation')
+
+	const minPaymentAmount = Decimal.min(firstPayment.paymentAmount, lastPayment.paymentAmount).toFixed(fixedDecimal)
+	const maxPaymentAmount = Decimal.max(firstPayment.paymentAmount, lastPayment.paymentAmount).toFixed(fixedDecimal)
+
+	const dateStart = setDate(initialPayment.paymentDate, 1)
+	const dateEnd = setDate(lastPayment.paymentDate, 1)
+
+	// TODO: Validate that the difference in months is rounded correctly. Currently it is truncated.
+	const term = differenceInMonths(dateEnd, dateStart)
+
+	const amount = new Decimal(parameters.amount).toFixed(fixedDecimal)
+	const overAllInterest = schedulePayments.reduce(
+		(overAllInterest, pay) => new Decimal(overAllInterest).plus(pay.interestAmount).toFixed(fixedDecimal),
+		new Decimal(0).toFixed(fixedDecimal),
+	)
+
+	const efficientRate = new Decimal(overAllInterest).div(amount).mul(100).toFixed(fixedDecimal)
+	const fullAmount = new Decimal(overAllInterest).add(amount).toFixed(fixedDecimal)
+
+	return {
+		minPaymentAmount,
+		maxPaymentAmount,
+		term,
+		amount,
+		overAllInterest,
+		efficientRate,
+		fullAmount,
+		payments: schedulePayments,
 	}
+}
 
-	getSchedulePoint(paymentDate: Date, paymentType: PaymentType, paymentAmount: Decimal.Value) {
-		paymentDate = this.getPaymentDateOnWorkingDay(paymentDate)
-		return { paymentDate, paymentType, paymentAmount }
-	}
+export function printSchedule(schedule: LSSchedule, printFunction: (message: string) => void) {
+	const pf = printFunction || console.log
 
-	getPaymentDateOnWorkingDay(paymentDate: Date): Date {
-		let paymentDateOnWorkingDay = new Date(paymentDate)
-		let amount = 1
+	pf('Payment = {' + schedule.minPaymentAmount + ', ' + schedule.maxPaymentAmount + '}, Term = ' + schedule.term)
+	pf('OverallInterest = ' + schedule.overAllInterest + ' , EfficientRate = ' + schedule.efficientRate)
 
-		while (this.isHoliday(paymentDateOnWorkingDay)) {
-			paymentDateOnWorkingDay = addDays(paymentDateOnWorkingDay, amount)
-
-			if (paymentDateOnWorkingDay.getMonth() !== paymentDate.getMonth()) {
-				amount = -1
-				paymentDateOnWorkingDay = addDays(paymentDateOnWorkingDay, amount)
-			}
-		}
-
-		return paymentDateOnWorkingDay
-	}
-
-	printSchedule(schedule: LSSchedule, printFunction: (message: string) => void) {
-		const pf = printFunction || console.log
-
-		pf('Payment = {' + schedule.minPaymentAmount + ', ' + schedule.maxPaymentAmount + '}, Term = ' + schedule.term)
-		pf('OverallInterest = ' + schedule.overAllInterest + ' , EfficientRate = ' + schedule.efficientRate)
-
-		schedule.payments?.forEach((pay) => {
-			pf(
-				pay.paymentDate +
-					'\t|\t' +
-					pay.initialBalance +
-					'\t|\t' +
-					pay.paymentAmount +
-					'\t|\t' +
-					pay.principalAmount +
-					'\t|\t' +
-					pay.interestAmount +
-					'\t|\t' +
-					pay.finalBalance,
-			)
-		})
-	}
+	schedule.payments?.forEach((pay) => {
+		pf(
+			pay.paymentDate +
+				'\t|\t' +
+				pay.initialBalance +
+				'\t|\t' +
+				pay.paymentAmount +
+				'\t|\t' +
+				pay.principalAmount +
+				'\t|\t' +
+				pay.interestAmount +
+				'\t|\t' +
+				pay.finalBalance,
+		)
+	})
 }
