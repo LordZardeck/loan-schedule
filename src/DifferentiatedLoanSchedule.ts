@@ -4,11 +4,11 @@ import { LSOptions, LSParameters, LSPayment, LSSchedule } from './types'
 import { addMonths, setDate } from 'date-fns'
 
 export class DifferentiatedLoanSchedule extends AbstractLoanSchedule {
-	calculateSchedule(parameters: LSParameters): LSSchedule {
+	generatePayments(parameters: LSParameters) {
 		const { issueDate, term, amount, rate, paymentOnDay } = parameters
 
-		const fixedPartOfPayment = new Decimal(amount).div(term).toFixed(2)
-		const payments = Array.from<LSPayment>({ length: term }).reduce(
+		const fixedPartOfPayment = new Decimal(amount).div(term).toFixed(this.decimal)
+		return Array.from<LSPayment>({ length: term }).reduce(
 			(payments) => {
 				const previousPayment = payments.at(-1)
 
@@ -45,8 +45,6 @@ export class DifferentiatedLoanSchedule extends AbstractLoanSchedule {
 			},
 			[this.getInitialPayment(amount, issueDate, rate)] as LSPayment[],
 		)
-
-		return this.applyFinalCalculation(parameters, payments)
 	}
 }
 

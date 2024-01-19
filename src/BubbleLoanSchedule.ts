@@ -1,13 +1,13 @@
 import Decimal from 'decimal.js'
 import { AbstractLoanSchedule } from './AbstractLoanSchedule'
-import { LSOptions, LSParameters, LSPayment, LSSchedule } from './types'
+import { LSOptions, LSParameters, LSPayment } from './types'
 import { addMonths, setDate } from 'date-fns'
 
 export class BubbleLoanSchedule extends AbstractLoanSchedule {
-	calculateSchedule(parameters: LSParameters): LSSchedule {
+	generatePayments(parameters: LSParameters) {
 		const { issueDate, term, amount, rate, paymentOnDay } = parameters
 
-		const payments = Array.from<LSPayment>({ length: term }).reduce(
+		return Array.from<LSPayment>({ length: term }).reduce(
 			(payments) => {
 				const previousPayment = payments.at(-1)
 
@@ -21,7 +21,7 @@ export class BubbleLoanSchedule extends AbstractLoanSchedule {
 						from: previousPayment.paymentDate,
 						to: paymentDate,
 						amount: initialBalance,
-						rate: new Decimal(rate).toFixed(2),
+						rate: new Decimal(rate).toFixed(this.decimal),
 					}),
 				).toFixed(this.decimal)
 
@@ -44,8 +44,6 @@ export class BubbleLoanSchedule extends AbstractLoanSchedule {
 			},
 			[this.getInitialPayment(amount, issueDate, rate)] as LSPayment[],
 		)
-
-		return this.applyFinalCalculation(parameters, payments)
 	}
 }
 

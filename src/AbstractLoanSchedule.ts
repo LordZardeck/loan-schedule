@@ -20,7 +20,7 @@ import {
 	addDays,
 } from 'date-fns'
 
-export abstract class AbstractLoanSchedule {
+export abstract class AbstractLoanSchedule<Payment extends LSPayment = LSPayment> {
 	decimal = 2
 	prodCalendar: ProdCal | null = null
 
@@ -32,21 +32,24 @@ export abstract class AbstractLoanSchedule {
 		}
 	}
 
-	abstract calculateSchedule(p: LSParameters): LSSchedule
+	abstract generatePayments(parameters: LSParameters): Payment[]
 
-	applyFinalCalculation<Payment extends LSPayment>(
-		parameters: LSParameters,
-		payments: Payment[],
-	): LSSchedule<Payment> {
-		const initialPayment = payments.at(0)
-		const firstPayment = payments.at(1)
-		const lastPayment = payments.at(-1)
+	calculateSchedule(parameters: LSParameters, payments?: Payment[]): LSSchedule<Payment> {
+		const schedulePayments = payments ?? this.generatePayments(parameters)
+
+		const initialPayment = schedulePayments.at(0)
+		const firstPayment = schedulePayments.at(1)
+		const lastPayment = schedulePayments.at(-1)
 
 		if (initialPayment === undefined || firstPayment === undefined || lastPayment === undefined)
 			throw new Error('There must exist at least two payments to apply final calculation')
 
-		const minPaymentAmount = Decimal.min(firstPayment.paymentAmount, lastPayment.paymentAmount).toFixed(2)
-		const maxPaymentAmount = Decimal.max(firstPayment.paymentAmount, lastPayment.paymentAmount).toFixed(2)
+		const minPaymentAmount = Decimal.min(firstPayment.paymentAmount, lastPayment.paymentAmount).toFixed(
+			this.decimal,
+		)
+		const maxPaymentAmount = Decimal.max(firstPayment.paymentAmount, lastPayment.paymentAmount).toFixed(
+			this.decimal,
+		)
 
 		const dateStart = setDate(initialPayment.paymentDate, 1)
 		const dateEnd = setDate(lastPayment.paymentDate, 1)
@@ -54,14 +57,14 @@ export abstract class AbstractLoanSchedule {
 		// TODO: Validate that the difference in months is rounded correctly. Currently it is truncated.
 		const term = differenceInMonths(dateEnd, dateStart)
 
-		const amount = new Decimal(parameters.amount).toFixed(2)
-		const overAllInterest = payments.reduce(
-			(overAllInterest, pay) => new Decimal(overAllInterest).plus(pay.interestAmount).toFixed(2),
-			new Decimal(0).toFixed(2),
+		const amount = new Decimal(parameters.amount).toFixed(this.decimal)
+		const overAllInterest = schedulePayments.reduce(
+			(overAllInterest, pay) => new Decimal(overAllInterest).plus(pay.interestAmount).toFixed(this.decimal),
+			new Decimal(0).toFixed(this.decimal),
 		)
 
-		const efficientRate = new Decimal(overAllInterest).div(amount).mul(100).toFixed(2)
-		const fullAmount = new Decimal(overAllInterest).add(amount).toFixed(2)
+		const efficientRate = new Decimal(overAllInterest).div(amount).mul(100).toFixed(this.decimal)
+		const fullAmount = new Decimal(overAllInterest).add(amount).toFixed(this.decimal)
 
 		return {
 			minPaymentAmount,
@@ -71,7 +74,7 @@ export abstract class AbstractLoanSchedule {
 			overAllInterest,
 			efficientRate,
 			fullAmount,
-			payments,
+			payments: schedulePayments,
 		}
 	}
 
@@ -98,7 +101,7 @@ export abstract class AbstractLoanSchedule {
 						rate,
 					}),
 				)
-				.toFixed(2)
+				.toFixed(this.decimal)
 		}
 
 		const endOfYear = new Date(from.getFullYear(), 11, 31)
@@ -120,7 +123,7 @@ export abstract class AbstractLoanSchedule {
 					rate,
 				}),
 			)
-			.toFixed(2)
+			.toFixed(this.decimal)
 	}
 
 	getInterestByPeriod({ rate, to, from, amount }: LSInterestByPeriodParameters): Decimal {

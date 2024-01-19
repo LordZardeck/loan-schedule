@@ -7,7 +7,7 @@ type AnnuityPayment = LSPayment & {
 	annuityPaymentAmount: Decimal.Value
 }
 
-export class AnnuityLoanSchedule extends AbstractLoanSchedule {
+export class AnnuityLoanSchedule extends AbstractLoanSchedule<AnnuityPayment> {
 	printSchedule(schedule: LSSchedule<AnnuityPayment>, printFunction: (message: string) => void) {
 		const pf = printFunction || console.log
 
@@ -33,7 +33,7 @@ export class AnnuityLoanSchedule extends AbstractLoanSchedule {
 		})
 	}
 
-	calculateSchedule(parameters: LSParameters): LSSchedule<AnnuityPayment> {
+	generatePayments(parameters: LSParameters) {
 		const { issueDate, term, amount, rate, paymentAmount, paymentOnDay, earlyRepayment = [] } = parameters
 		let interestAccruedAmount = new Decimal(0)
 		const regularPaymentAmount = new Decimal(
@@ -79,7 +79,7 @@ export class AnnuityLoanSchedule extends AbstractLoanSchedule {
 
 			pay.paymentDate = schedulePoints[currentSchedulePoint].paymentDate
 			pay.initialBalance = payments[currentSchedulePoint - 1].finalBalance
-			pay.interestRate = new Decimal(rate).toFixed(2)
+			pay.interestRate = new Decimal(rate).toFixed(this.decimal)
 			pay.annuityPaymentAmount = this.calculateAnnuityPaymentAmount({
 				amount: pay.initialBalance,
 				term: term - currentSchedulePoint + 1,
@@ -107,7 +107,7 @@ export class AnnuityLoanSchedule extends AbstractLoanSchedule {
 					scheduledPaymentAmount.lt(pay.initialBalance)
 				) {
 					if (interestAccruedAmount.gt(scheduledPaymentAmount)) {
-						pay.interestAmount = scheduledPaymentAmount.toFixed(2)
+						pay.interestAmount = scheduledPaymentAmount.toFixed(this.decimal)
 						interestAccruedAmount = interestAccruedAmount.minus(scheduledPaymentAmount)
 					} else {
 						pay.interestAmount = interestAccruedAmount.toFixed(this.decimal)
@@ -116,7 +116,7 @@ export class AnnuityLoanSchedule extends AbstractLoanSchedule {
 					pay.principalAmount = new Decimal(scheduledPaymentAmount)
 						.minus(new Decimal(pay.interestAmount))
 						.toFixed(this.decimal)
-					pay.paymentAmount = scheduledPaymentAmount.toFixed(2)
+					pay.paymentAmount = scheduledPaymentAmount.toFixed(this.decimal)
 				} else {
 					pay.interestAmount = interestAccruedAmount.toFixed(this.decimal)
 					pay.principalAmount = pay.initialBalance
@@ -125,8 +125,8 @@ export class AnnuityLoanSchedule extends AbstractLoanSchedule {
 						.toFixed(this.decimal)
 				}
 			} else {
-				pay.principalAmount = scheduledPaymentAmount.toFixed(2)
-				pay.paymentAmount = scheduledPaymentAmount.toFixed(2)
+				pay.principalAmount = scheduledPaymentAmount.toFixed(this.decimal)
+				pay.paymentAmount = scheduledPaymentAmount.toFixed(this.decimal)
 				pay.interestAmount = new Decimal(0).toFixed(this.decimal)
 			}
 
@@ -138,7 +138,7 @@ export class AnnuityLoanSchedule extends AbstractLoanSchedule {
 			currentSchedulePoint++
 		}
 
-		return this.applyFinalCalculation(parameters, payments)
+		return payments
 	}
 
 	calculateMaxLoanAmount(parameters: Required<Pick<LSParameters, 'term' | 'rate' | 'paymentAmount'>>): Decimal.Value {
@@ -146,7 +146,9 @@ export class AnnuityLoanSchedule extends AbstractLoanSchedule {
 		const interestRate = new Decimal(parameters.rate).div(100).div(12)
 		const paymentAmount = new Decimal(parameters.paymentAmount)
 
-		return paymentAmount.div(interestRate.div(interestRate.plus(1).pow(term.neg()).neg().plus(1))).toFixed(2)
+		return paymentAmount
+			.div(interestRate.div(interestRate.plus(1).pow(term.neg()).neg().plus(1)))
+			.toFixed(this.decimal)
 	}
 
 	calculateAnnuityPaymentAmount(parameters: Required<Pick<LSParameters, 'term' | 'rate' | 'amount'>>): Decimal.Value {
@@ -155,7 +157,7 @@ export class AnnuityLoanSchedule extends AbstractLoanSchedule {
 
 		return new Decimal(parameters.amount)
 			.mul(interestRate.div(interestRate.plus(1).pow(term.neg()).neg().plus(1)))
-			.toFixed(2)
+			.toFixed(this.decimal)
 	}
 }
 
