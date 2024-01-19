@@ -1,40 +1,119 @@
-import { describe, expect, mock, test } from 'bun:test'
-import { createHolidayChecker, getPaymentDate, getPaymentDateOnWorkingDay, printSchedule } from '../src'
+import { describe, expect, mock, it } from 'bun:test'
+import {
+	calculateSchedule,
+	createHolidayChecker,
+	generateAnnuityPayments,
+	getPaymentDate,
+	getPaymentDateOnWorkingDay,
+	printSchedule,
+	ScheduleConfig,
+} from '../src'
 import ProdCal from 'prod-cal'
 
-describe('AbstractLoan should', () => {
-	test('print Schedule', () => {
-		const printFunction = mock(() => false)
-
-		printSchedule(
-			{
-				overAllInterest: 0,
-				amount: 0,
-				fullAmount: 0,
-				term: 0,
-				minPaymentAmount: 0,
-				maxPaymentAmount: 0,
-				payments: [],
-				efficientRate: 0,
-			},
-			printFunction,
-		)
-		expect(printFunction).toHaveBeenCalled()
-	})
-
-	test('add month and closest day', () => {
+describe('AbstractLoan', () => {
+	it('should add month and closest day', () => {
 		expect(getPaymentDate(new Date(2013, 4, 1), 33, 31).getTime()).toEqual(new Date(2016, 1, 29).getTime())
 	})
 
-	test('return payment date as next day after holiday', () => {
+	it('should return payment date as next day after holiday', () => {
 		expect(
 			getPaymentDateOnWorkingDay(new Date(2015, 4, 1), createHolidayChecker(new ProdCal('ru'))).getTime(),
 		).toEqual(new Date(2015, 4, 5).getTime())
 	})
 
-	test('return payment date as closet day before holiday if holiday lasts to the end of the month', () => {
+	it('should return payment date as closet day before holiday if holiday lasts to the end of the month', () => {
 		expect(
 			getPaymentDateOnWorkingDay(new Date(2015, 4, 31), createHolidayChecker(new ProdCal('ru'))).getTime(),
 		).toEqual(new Date(2015, 4, 29).getTime())
+	})
+
+	describe('printSchedule', () => {
+		it('should print Schedule', () => {
+			const printFunction = mock(() => false)
+
+			printSchedule(
+				{
+					overAllInterest: 0,
+					amount: 0,
+					fullAmount: 0,
+					term: 0,
+					minPaymentAmount: 0,
+					maxPaymentAmount: 0,
+					payments: [],
+					efficientRate: 0,
+				},
+				printFunction,
+			)
+			expect(printFunction).toHaveBeenCalled()
+		})
+	})
+
+	describe('calculateSchedule', () => {
+		it('should require at least 2 payment records', () => {
+			expect(() =>
+				calculateSchedule(
+					{
+						amount: 500000,
+						rate: 11.5,
+						term: 12,
+						paymentOnDay: 25,
+						issueDate: new Date(2018, 9, 25),
+					},
+					[],
+				),
+			).toThrow()
+		})
+
+		describe('should return the same term length specified', () => {
+			it('when no payment amount is specified', () => {
+				const config: ScheduleConfig = {
+					amount: 26000,
+					rate: 18,
+					term: 60,
+					paymentOnDay: 25,
+					issueDate: new Date(2018, 9, 25),
+				}
+				const schedule = calculateSchedule(config, generateAnnuityPayments(config))
+				expect(schedule.term).toEqual(60)
+			})
+			it('when no payment amount is specified and date has time', () => {
+				const config: ScheduleConfig = {
+					amount: 26000,
+					rate: 18,
+					term: 60,
+					paymentOnDay: 25,
+					issueDate: new Date(2018, 9, 25, 6, 0, 0),
+				}
+				const schedule = calculateSchedule(config, generateAnnuityPayments(config))
+				expect(schedule.term).toEqual(60)
+			})
+
+			it('when payment amount is specified', () => {
+				const config: ScheduleConfig = {
+					amount: 26000,
+					rate: 18,
+					term: 60,
+					paymentOnDay: 22,
+					paymentAmount: 660.23,
+					issueDate: new Date(2024, 0, 22),
+					earlyRepayment: [],
+				}
+				const schedule = calculateSchedule(config, generateAnnuityPayments(config))
+				expect(schedule.term).toEqual(60)
+			})
+			it('when payment amount is specified and date has time', () => {
+				const config: ScheduleConfig = {
+					amount: 26000,
+					rate: 18,
+					term: 60,
+					paymentOnDay: 22,
+					paymentAmount: 660.23,
+					issueDate: new Date(2024, 0, 22, 6, 0, 0),
+					earlyRepayment: [],
+				}
+				const schedule = calculateSchedule(config, generateAnnuityPayments(config))
+				expect(schedule.term).toEqual(60)
+			})
+		})
 	})
 })

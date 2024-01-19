@@ -7,7 +7,7 @@
   "scripts": {
     "lint": "bunx eslint ./src/*.ts --fix",
     "watch": "bunx tsc -p tsconfig.json --watch",
-    "build": "bunx rimraf dist && bunx tsc -p tsconfig.json",
+    "build": "bunx rimraf dist && bun build.ts && bunx tsc --emitDeclarationOnly",
     "test": "bun test",
     "coverage": "bun test --coverage"
   },
