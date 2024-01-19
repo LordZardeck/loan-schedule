@@ -1,13 +1,24 @@
-import { describe, test, expect, mock } from 'bun:test'
+import { describe, expect, mock, test } from 'bun:test'
 import { createHolidayChecker, getPaymentDate, getPaymentDateOnWorkingDay, printSchedule } from '../src'
-import Decimal from 'decimal.js'
 import ProdCal from 'prod-cal'
 
 describe('AbstractLoan should', () => {
 	test('print Schedule', () => {
 		const printFunction = mock(() => false)
 
-		printSchedule({ overAllInterest: new Decimal(0), payments: [] }, printFunction)
+		printSchedule(
+			{
+				overAllInterest: 0,
+				amount: 0,
+				fullAmount: 0,
+				term: 0,
+				minPaymentAmount: 0,
+				maxPaymentAmount: 0,
+				payments: [],
+				efficientRate: 0,
+			},
+			printFunction,
+		)
 		expect(printFunction).toHaveBeenCalled()
 	})
 

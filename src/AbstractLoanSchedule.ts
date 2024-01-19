@@ -1,26 +1,18 @@
 import Decimal from 'decimal.js'
 import ProdCal from 'prod-cal'
+import { InterestParameters, Payment, PaymentType, Schedule, ScheduleConfig, ScheduleOptions } from './types'
 import {
-	LSInterestByPeriodParameters,
-	LSInterestParameters,
-	LSOptions,
-	LSParameters,
-	LSPayment,
-	LSSchedule,
-	PaymentType,
-} from './types'
-import {
+	addDays,
+	addMonths,
 	differenceInDays,
 	differenceInMonths,
+	endOfMonth,
 	isSameYear,
 	setDate,
 	startOfMonth,
-	addMonths,
-	endOfMonth,
-	addDays,
 } from 'date-fns'
 
-export function createInitialPayment(amount: Decimal.Value, paymentDate: Date, rate: Decimal.Value): LSPayment {
+export function createInitialPayment(amount: Decimal.Value, paymentDate: Date, rate: Decimal.Value): Payment {
 	return {
 		paymentDate,
 		initialBalance: new Decimal(0),
@@ -32,7 +24,7 @@ export function createInitialPayment(amount: Decimal.Value, paymentDate: Date, r
 	}
 }
 
-export function getInterestByPeriod({ rate, to, from, amount }: LSInterestByPeriodParameters): Decimal {
+export function getInterestByPeriod({ rate, to, from, amount }: InterestParameters): Decimal {
 	return new Decimal(rate)
 		.div(100)
 		.div(to.getFullYear() % 4 === 0 ? 366 : 365)
@@ -77,8 +69,8 @@ export function getSchedulePoint(paymentDate: Date, paymentType: PaymentType, pa
 }
 
 export function calculateInterestByPeriod(
-	{ amount, rate, from, to }: LSInterestParameters,
-	options?: LSOptions,
+	{ amount, rate, from, to }: InterestParameters,
+	options?: ScheduleOptions,
 ): Decimal.Value {
 	const fixedDecimal = options?.decimalDigit ?? 2
 
@@ -117,11 +109,11 @@ export function calculateInterestByPeriod(
 		.toFixed(fixedDecimal)
 }
 
-export function calculateSchedule<Payment extends LSPayment = LSPayment>(
-	parameters: LSParameters,
-	schedulePayments: Payment[],
-	options?: LSOptions,
-): LSSchedule<Payment> {
+export function calculateSchedule<P extends Payment = Payment>(
+	parameters: ScheduleConfig,
+	schedulePayments: P[],
+	options?: ScheduleOptions,
+): Schedule<P> {
 	const fixedDecimal = options?.decimalDigit ?? 2
 
 	const initialPayment = schedulePayments.at(0)
@@ -137,7 +129,6 @@ export function calculateSchedule<Payment extends LSPayment = LSPayment>(
 	const dateStart = setDate(initialPayment.paymentDate, 1)
 	const dateEnd = setDate(lastPayment.paymentDate, 1)
 
-	// TODO: Validate that the difference in months is rounded correctly. Currently it is truncated.
 	const term = differenceInMonths(dateEnd, dateStart)
 
 	const amount = new Decimal(parameters.amount).toFixed(fixedDecimal)
@@ -150,18 +141,18 @@ export function calculateSchedule<Payment extends LSPayment = LSPayment>(
 	const fullAmount = new Decimal(overAllInterest).add(amount).toFixed(fixedDecimal)
 
 	return {
-		minPaymentAmount,
-		maxPaymentAmount,
+		minPaymentAmount: new Decimal(minPaymentAmount).toNumber(),
+		maxPaymentAmount: new Decimal(maxPaymentAmount).toNumber(),
 		term,
-		amount,
-		overAllInterest,
-		efficientRate,
-		fullAmount,
+		amount: new Decimal(amount).toNumber(),
+		overAllInterest: new Decimal(overAllInterest).toNumber(),
+		efficientRate: new Decimal(efficientRate).toNumber(),
+		fullAmount: new Decimal(fullAmount).toNumber(),
 		payments: schedulePayments,
 	}
 }
 
-export function printSchedule(schedule: LSSchedule, printFunction: (message: string) => void) {
+export function printSchedule(schedule: Schedule, printFunction: (message: string) => void) {
 	const pf = printFunction || console.log
 
 	pf('Payment = {' + schedule.minPaymentAmount + ', ' + schedule.maxPaymentAmount + '}, Term = ' + schedule.term)

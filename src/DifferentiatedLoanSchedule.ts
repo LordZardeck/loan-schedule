@@ -1,14 +1,14 @@
 import Decimal from 'decimal.js'
 import { calculateInterestByPeriod, calculateSchedule, createInitialPayment } from './AbstractLoanSchedule'
-import { LSOptions, LSParameters, LSPayment } from './types'
+import { ScheduleOptions, ScheduleConfig, Payment } from './types'
 import { addMonths, setDate } from 'date-fns'
 
-export function generateDifferentiatedPayments(parameters: LSParameters, options?: LSOptions) {
+export function generateDifferentiatedPayments(parameters: ScheduleConfig, options?: ScheduleOptions) {
 	const fixedDecimal = options?.decimalDigit ?? 2
 	const { issueDate, term, amount, rate, paymentOnDay } = parameters
 
 	const fixedPartOfPayment = new Decimal(amount).div(term).toFixed(fixedDecimal)
-	return Array.from<LSPayment>({ length: term }).reduce(
+	return Array.from<Payment>({ length: term }).reduce(
 		(payments) => {
 			const previousPayment = payments.at(-1)
 
@@ -39,10 +39,10 @@ export function generateDifferentiatedPayments(parameters: LSParameters, options
 				},
 			]
 		},
-		[createInitialPayment(amount, issueDate, rate)] as LSPayment[],
+		[createInitialPayment(amount, issueDate, rate)] as Payment[],
 	)
 }
 
-export function calculateDifferentiatedLoanSchedule(parameters: LSParameters, options?: LSOptions) {
+export function calculateDifferentiatedLoanSchedule(parameters: ScheduleConfig, options?: ScheduleOptions) {
 	return calculateSchedule(parameters, generateDifferentiatedPayments(parameters, options), options)
 }

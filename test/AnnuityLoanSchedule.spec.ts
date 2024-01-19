@@ -4,7 +4,7 @@ import {
 	calculateAnnuityPaymentAmount,
 	calculateInterestByPeriod,
 	calculateMaxLoanAmount,
-	LSParameters,
+	ScheduleConfig,
 	PaymentType,
 } from '../src'
 import Decimal from 'decimal.js'
@@ -121,7 +121,7 @@ describe('Annuity loan schedule', () => {
 	})
 
 	describe('with params($50000/12m/11.5%/25.10.2016/25) and early repayment', () => {
-		let parameters: LSParameters = {} as LSParameters
+		let parameters: ScheduleConfig = {} as ScheduleConfig
 
 		beforeAll(() => {
 			parameters = {

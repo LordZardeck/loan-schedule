@@ -8,136 +8,165 @@
 [..::Live demo::..](https://timmson.github.io/loan-schedule-ui/)
 
 ## Install
+### Bun
 ```sh
-npm i loan-schedule.js
+bun add loan-schedule
+```
+### Yarn
+```sh
+yarn add loan-schedule
+```
+### NPM
+```sh
+npm i loan-schedule
 ```
 
-## Init
+## Annuity
 ```js
-const LoanSchedule = require("loan-schedule.js");
+import { calculateAnnuityLoanSchedule } from 'loan-schedule'
 
-const loanSchedule = new LoanSchedule({});
+const schedule = calculateAnnuityLoanSchedule(
+	{
+		amount: 500000,
+		rate: 11.5,
+		term: 12,
+		paymentOnDay: 25,
+		issueDate: new Date(2018, 9, 25),
+	},
+	{ decimalDigit: 2 },
+)
 ```
 
-## Init with options
+### Provide payments manually
 ```js
-const LoanSchedule = require("loan-schedule.js");
+import { calculateSchedule, generateAnnuityPayments } from 'loan-schedule'
 
-const loanSchedule = new LoanSchedule({
-    DecimalDigit : 2,
-    dateFormat: "DD.MM.YYYY",
-    prodCalendar: "ru"
-});
+const config = {
+	amount: 500000,
+	rate: 11.5,
+	term: 12,
+	paymentOnDay: 25,
+	issueDate: new Date(2018, 9, 25),
+}
+const payments = generateAnnuityPayments(config)
+const schedule = calculateSchedule(config, payments)
 ```
 
-## Interest by period
+### Annuity loan schedule (payment amount will be calculated)
 ```js
-let interest = loanSchedule.calculateInterestByPeriod({
-                   from: "10.12.2015", 
-                   to: "10.01.2016", 
-                   amount: 1000, 
-                   rate: 16.7
-});
-console.log(interest);
-```
+import { calculateAnnuityLoanSchedule } from 'loan-schedule'
 
-## Payment
-```js
-let payment = loanSchedule.calculateAnnuityPaymentAmount({
-                  amount: 110000, 
-                  term: 60, 
-                  rate: 12.9
-});
-console.log(payment);
-```
-
-## Max Loan Amount
-```js
-let loanAmount = loanSchedule.calculateMaxLoanAmount({
-                  paymentAmount: 2497.21,
-                  term: 60,
-                  rate: 12.9
-});
-console.log(loanAmount);
-```
-
-## Annuity loan schedule (payment amount will be calculated)
-```js
-loanSchedule.calculateSchedule({
-                   amount: 50000,
-                   rate: 11.5,
-                   term: 12,
-                   paymentOnDay: 25,
-                   issueDate: "25.10.2016",
-                   scheduleType : LoanSchedule.ANNUITY_SCHEDULE
+calculateAnnuityLoanSchedule({
+	amount: 50000,
+	rate: 11.5,
+	term: 12,
+	paymentOnDay: 25,
+	issueDate: new Date(2016, 9, 24),
 }).payments.forEach((pay) => {
-    console.log(pay.paymentDate + "\t|\t\t"
-     + pay.initialBalance + "\t|\t\t"
-     + pay.paymentAmount + "\t|\t\t"
-     + pay.principalAmount + "\t|\t\t"
-     + pay.interestAmount + "\t|\t\t"
-     + pay.finalBalance
-     );
-});
+	console.log(
+		pay.paymentDate +
+		'\t|\t\t' +
+		pay.initialBalance +
+		'\t|\t\t' +
+		pay.paymentAmount +
+		'\t|\t\t' +
+		pay.principalAmount +
+		'\t|\t\t' +
+		pay.interestAmount +
+		'\t|\t\t' +
+		pay.finalBalance,
+	)
+})
 ```
 
-## Annuity loan schedule (payment amount is set)
+### Annuity loan schedule (payment amount is set)
 ```js
-loanSchedule.calculateSchedule({
-                   amount: 50000,
-                   rate: 11.5,
-                   term: 12,
-                   paymentAmount: 40000,
-                   paymentOnDay: 25,
-                   issueDate: "25.10.2016",
-                   scheduleType : LoanSchedule.ANNUITY_SCHEDULE
+import { calculateAnnuityLoanSchedule } from 'loan-schedule'
+
+calculateAnnuityLoanSchedule({
+	amount: 50000,
+	rate: 11.5,
+	term: 12,
+	paymentAmount: 40000, // Configure your custom payment here
+	paymentOnDay: 25,
+	issueDate: new Date(2016, 9, 24),
 }).payments.forEach((pay) => {
-    console.log(pay.paymentDate + "\t|\t\t"
-     + pay.initialBalance + "\t|\t\t"
-     + pay.paymentAmount + "\t|\t\t"
-     + pay.principalAmount + "\t|\t\t"
-     + pay.interestAmount + "\t|\t\t"
-     + pay.finalBalance
-     );
-});
+	console.log(
+		pay.paymentDate +
+		'\t|\t\t' +
+		pay.initialBalance +
+		'\t|\t\t' +
+		pay.paymentAmount +
+		'\t|\t\t' +
+		pay.principalAmount +
+		'\t|\t\t' +
+		pay.interestAmount +
+		'\t|\t\t' +
+		pay.finalBalance,
+	)
+})
 ```
 
-## Differentiated loan schedule
+### Payment
 ```js
-loanSchedule.calculateSchedule({
-                   amount: 50000,
-                   rate: 11.5,
-                   term: 12,
-                   paymentOnDay: 25,
-                   issueDate: "25.10.2016",
-                   scheduleType : LoanSchedule.DIFFERENTIATED_SCHEDULE
-}).payments.forEach((pay) => {
-    console.log(pay.paymentDate + "\t|\t\t"
-     + pay.initialBalance + "\t|\t\t"
-     + pay.paymentAmount + "\t|\t\t"
-     + pay.principalAmount + "\t|\t\t"
-     + pay.interestAmount + "\t|\t\t"
-     + pay.finalBalance
-     );
-});
+import { calculateAnnuityPaymentAmount } from 'loan-schedule'
+
+const payment = calculateAnnuityPaymentAmount({
+	amount: 110000,
+	term: 60,
+	rate: 12.9,
+})
 ```
 
-## Bubble loan schedule
+## Other Schedule Types
+
+### Bubble Loan
 ```js
-loanSchedule.calculateSchedule({
-                   amount: 50000,
-                   rate: 11.5,
-                   term: 12,
-                   paymentOnDay: 25,
-                   issueDate: "25.10.2016",
-                   scheduleType : LoanSchedule.BUUBLE_SCHEDULE
-}).payments.forEach((pay) => {
-    console.log(pay.paymentDate + "\t|\t\t"
-     + pay.initialBalance + "\t|\t\t"
-     + pay.paymentAmount + "\t|\t\t"
-     + pay.principalAmount + "\t|\t\t"
-     + pay.interestAmount + "\t|\t\t"
-     + pay.finalBalance
-     );
-});
+import { calculateBubbleLoanSchedule } from 'loan-schedule'
+
+const schedule = calculateBubbleLoanSchedule({
+	amount: 50000,
+	rate: 11.5,
+	term: 12,
+	paymentOnDay: 25,
+	issueDate: new Date(2016, 9, 25),
+})
+```
+
+### Differentiated Loan
+```js
+import { calculateDifferentiatedLoanSchedule } from 'loan-schedule'
+
+const schedule = calculateDifferentiatedLoanSchedule({
+	amount: 50000,
+	rate: 11.5,
+	term: 12,
+	paymentOnDay: 25,
+	issueDate: new Date(2016, 9, 25),
+})
+```
+
+## General Utilities
+
+### Interest By Period
+```js
+import { calculateInterestByPeriod } from 'loan-schedule'
+
+const interest = calculateInterestByPeriod({
+	from: new Date(2015, 11, 10),
+	to: new Date(2016, 0, 10),
+	amount: 1000,
+	rate: 16.7,
+})
+```
+
+### Max Loan Amount
+```js
+import { calculateMaxLoanAmount } from 'loan-schedule'
+
+const loanAmount = calculateMaxLoanAmount({
+	paymentAmount: 2497.21,
+	term: 60,
+	rate: 12.9,
+})
 ```

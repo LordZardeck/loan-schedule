@@ -7,15 +7,15 @@ import {
 	getPaymentDate,
 	getPaymentDateOnWorkingDay,
 } from './AbstractLoanSchedule'
-import { LSOptions, LSParameters, LSPayment, LSSchedule, PaymentType } from './types'
+import { Payment, PaymentType, Schedule, ScheduleConfig, ScheduleOptions } from './types'
 import { isAfter, isSameDay } from 'date-fns'
 import ProdCal from 'prod-cal'
 
-type AnnuityPayment = LSPayment & {
+type AnnuityPayment = Payment & {
 	annuityPaymentAmount: Decimal.Value
 }
 
-export function generateAnnuityPayments(parameters: LSParameters, options?: LSOptions) {
+export function generateAnnuityPayments(parameters: ScheduleConfig, options?: ScheduleOptions) {
 	const fixedDecimal = options?.decimalDigit ?? 2
 	const isHoliday = options?.prodCalendar ? createHolidayChecker(new ProdCal(options.prodCalendar)) : () => false
 	const { issueDate, term, amount, rate, paymentAmount, paymentOnDay, earlyRepayment = [] } = parameters
@@ -131,7 +131,7 @@ export function generateAnnuityPayments(parameters: LSParameters, options?: LSOp
 	return payments
 }
 
-export function printAnnuitySchedule(schedule: LSSchedule<AnnuityPayment>, printFunction: (message: string) => void) {
+export function printAnnuitySchedule(schedule: Schedule<AnnuityPayment>, printFunction: (message: string) => void) {
 	const pf = printFunction || console.log
 
 	pf('Payment = {' + schedule.minPaymentAmount + ', ' + schedule.maxPaymentAmount + '}, Term = ' + schedule.term)
@@ -156,13 +156,13 @@ export function printAnnuitySchedule(schedule: LSSchedule<AnnuityPayment>, print
 	})
 }
 
-export function calculateAnnuityLoanSchedule(parameters: LSParameters, options?: LSOptions) {
+export function calculateAnnuityLoanSchedule(parameters: ScheduleConfig, options?: ScheduleOptions) {
 	return calculateSchedule(parameters, generateAnnuityPayments(parameters, options), options)
 }
 
 export function calculateAnnuityPaymentAmount(
-	parameters: Required<Pick<LSParameters, 'term' | 'rate' | 'amount'>>,
-	options?: LSOptions,
+	parameters: Required<Pick<ScheduleConfig, 'term' | 'rate' | 'amount'>>,
+	options?: ScheduleOptions,
 ): Decimal.Value {
 	const fixedDecimal = options?.decimalDigit ?? 2
 	const term = new Decimal(parameters.term)
@@ -174,8 +174,8 @@ export function calculateAnnuityPaymentAmount(
 }
 
 export function calculateMaxLoanAmount(
-	parameters: Required<Pick<LSParameters, 'term' | 'rate' | 'paymentAmount'>>,
-	options?: LSOptions,
+	parameters: Required<Pick<ScheduleConfig, 'term' | 'rate' | 'paymentAmount'>>,
+	options?: ScheduleOptions,
 ): Decimal.Value {
 	const fixedDecimal = options?.decimalDigit ?? 2
 	const term = new Decimal(parameters.term)
