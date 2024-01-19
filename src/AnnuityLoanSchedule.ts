@@ -11,7 +11,7 @@ import { Payment, PaymentType, Schedule, ScheduleConfig, ScheduleOptions } from 
 import { isAfter, isSameDay } from 'date-fns'
 import ProdCal from 'prod-cal'
 
-type AnnuityPayment = Payment & {
+export type AnnuityPayment = Payment & {
 	annuityPaymentAmount: Decimal.Value
 }
 
