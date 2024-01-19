@@ -1,7 +1,7 @@
 import Decimal from 'decimal.js'
 import { calculateInterestByPeriod, calculateSchedule, createInitialPayment } from './AbstractLoanSchedule'
 import { ScheduleOptions, ScheduleConfig, Payment } from './types'
-import { addMonths, setDate } from 'date-fns'
+import { addMonths, setDate, startOfDay } from 'date-fns'
 
 export function generateBubblePayments(parameters: ScheduleConfig, options?: ScheduleOptions) {
 	const fixedDecimal = options?.decimalDigit ?? 2
@@ -38,7 +38,7 @@ export function generateBubblePayments(parameters: ScheduleConfig, options?: Sch
 				},
 			]
 		},
-		[createInitialPayment(amount, issueDate, rate)] as Payment[],
+		[createInitialPayment(amount, startOfDay(issueDate), rate)] as Payment[],
 	)
 }
 

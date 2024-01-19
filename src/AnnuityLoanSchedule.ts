@@ -8,7 +8,7 @@ import {
 	getPaymentDateOnWorkingDay,
 } from './AbstractLoanSchedule'
 import { Payment, PaymentType, Schedule, ScheduleConfig, ScheduleOptions } from './types'
-import { isAfter, isSameDay } from 'date-fns'
+import { isAfter, isSameDay, startOfDay } from 'date-fns'
 import ProdCal from 'prod-cal'
 
 export type AnnuityPayment = Payment & {
@@ -34,7 +34,7 @@ export function generateAnnuityPayments(parameters: ScheduleConfig, options?: Sc
 
 	const payments: Array<AnnuityPayment> = [
 		{
-			...createInitialPayment(amount, issueDate, rate),
+			...createInitialPayment(amount, startOfDay(issueDate), rate),
 			annuityPaymentAmount: 0,
 		},
 	]
@@ -43,7 +43,7 @@ export function generateAnnuityPayments(parameters: ScheduleConfig, options?: Sc
 		.map(Number.call, Number)
 		.map((termMonth) => ({
 			paymentDate: getPaymentDateOnWorkingDay(
-				termMonth === 0 ? new Date(issueDate) : getPaymentDate(issueDate, termMonth, paymentOnDay),
+				termMonth === 0 ? startOfDay(issueDate) : getPaymentDate(issueDate, termMonth, paymentOnDay),
 				isHoliday,
 			),
 			paymentType: PaymentType.ER_TYPE_REGULAR,

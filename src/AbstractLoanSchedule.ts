@@ -9,6 +9,7 @@ import {
 	endOfMonth,
 	isSameYear,
 	setDate,
+	startOfDay,
 	startOfMonth,
 } from 'date-fns'
 
@@ -33,7 +34,7 @@ export function getInterestByPeriod({ rate, to, from, amount }: InterestParamete
 }
 
 export function getPaymentDate(issueDate: Date, scheduleMonth: number, paymentDay: number): Date {
-	const paymentDate = addMonths(startOfMonth(issueDate), scheduleMonth)
+	const paymentDate = addMonths(startOfMonth(startOfDay(issueDate)), scheduleMonth)
 	const paymentEndOfMonth = endOfMonth(paymentDate)
 
 	return setDate(
@@ -126,8 +127,8 @@ export function calculateSchedule<P extends Payment = Payment>(
 	const minPaymentAmount = Decimal.min(firstPayment.paymentAmount, lastPayment.paymentAmount).toFixed(fixedDecimal)
 	const maxPaymentAmount = Decimal.max(firstPayment.paymentAmount, lastPayment.paymentAmount).toFixed(fixedDecimal)
 
-	const dateStart = setDate(initialPayment.paymentDate, 1)
-	const dateEnd = setDate(lastPayment.paymentDate, 1)
+	const dateStart = setDate(startOfDay(initialPayment.paymentDate), 1)
+	const dateEnd = setDate(startOfDay(lastPayment.paymentDate), 1)
 
 	const term = differenceInMonths(dateEnd, dateStart)
 
