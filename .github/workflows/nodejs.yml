@@ -15,18 +15,22 @@ jobs:
         node-version: [ 16.x ]
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-
-    - name: Lint and coverage
-      run: |
-        npm i
-        npm run lint
-        npm run build
-        npm run coverage && npx codecov
-      env:
-        CI: true
-        CODECOV_TOKEN: 000c0032-edb5-4b49-a413-e98f16a5623d
+      - uses: actions/checkout@v1
+        
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+          
+      - name: Lint and coverage
+        run: |
+          bun i
+          bun run lint
+          bun run build
+          bun run coverage && bunx codecov
+        env:
+          CI: true
+          
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

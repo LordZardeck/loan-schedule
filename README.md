@@ -1,9 +1,9 @@
 # Library for loan amortization schedule manipulation
 
-[![codecov](https://codecov.io/gh/timmson/loan-schedule.js/branch/master/graph/badge.svg)](https://codecov.io/gh/timmson/loan-schedule.js)
-[![codacy](https://api.codacy.com/project/badge/Grade/0316cf5405fd4dbcb67455c33f5a63d5)](https://www.codacy.com/app/timmson666/loan-schedule.js)
-[![version](https://img.shields.io/npm/v/loan-schedule.js.svg)](https://www.npmjs.com/package/loan-schedule.js)
-[![license](https://img.shields.io/npm/l/loan-schedule.js.svg)](https://www.npmjs.com/package/loan-schedule.js)
+[![codecov](https://codecov.io/gh/lordzardeck/loan-schedule/branch/master/graph/badge.svg)](https://codecov.io/gh/lordzardeck/loan-schedule)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/c7e72328deea4876b950a4c7229297be)](https://app.codacy.com/gh/LordZardeck/loan-schedule/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![version](https://img.shields.io/npm/v/loan-schedule.svg)](https://www.npmjs.com/package/loan-schedule)
+[![license](https://img.shields.io/npm/l/loan-schedule.svg)](https://www.npmjs.com/package/loan-schedule)
 
 [..::Live demo::..](https://timmson.github.io/loan-schedule-ui/)
 
