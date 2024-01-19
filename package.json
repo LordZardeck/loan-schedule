@@ -1,5 +1,5 @@
 {
-  "name": "loan-schedule.js",
+  "name": "loan-schedule",
   "version": "2.0.4",
   "description": "Library for loan amortization schedule manipulation",
   "main": "./dist/index.js",
@@ -27,6 +27,7 @@
     "url": "https://github.com/timmson/loan-schedule.js/issues"
   },
   "dependencies": {
+    "date-fns": "^3.2.0",
     "decimal.js": "^10.4.3",
     "moment": "^2.29.4",
     "prod-cal": "^2.0.1"
@@ -34,11 +35,13 @@
   "devDependencies": {
     "@babel/preset-env": "^7.20.2",
     "@babel/preset-typescript": "^7.18.6",
+    "@types/bun": "^1.0.2",
     "@types/jest": "^29.5.0",
     "@typescript-eslint/eslint-plugin": "^5.59.6",
     "babel-plugin-replace-ts-export-assignment": "^0.0.2",
     "eslint": "^8.41.0",
     "jest": "^29.5.0",
+    "prettier": "3.1.0",
     "typescript": "^5.0.4"
   }
 }

@@ -1,63 +1,63 @@
-import {Moment} from "moment"
+import Decimal from 'decimal.js'
 
 export type LSOptions = {
 	decimalDigit?: number
-	dateFormat?: string
 	prodCalendar?: string
 }
 
-export type LSEarlyRepayment = {
-	erType: string
-	erAmount: string
+export enum PaymentType {
+	ER_TYPE_MATURITY,
+	ER_TYPE_ANNUITY,
+	ER_TYPE_REGULAR,
 }
 
-export type LSEarlyRepayments = {
-	[date: string]: LSEarlyRepayment
+export type LSEarlyRepayment = {
+	paymentDate: Date
+	type: PaymentType
+	amount: Decimal.Value
 }
 
 export type LSParameters = {
-	amount: string
-	issueDate?: string
+	amount: Decimal.Value
+	issueDate: Date
 	term: number
-	rate: string
-	paymentAmount?: string
-	paymentOnDay?: number
-	earlyRepayment?: LSEarlyRepayments
-
+	rate: Decimal.Value
+	paymentOnDay: number
+	paymentAmount?: Decimal.Value
+	earlyRepayment?: LSEarlyRepayment[]
 }
 
 export type LSPayment = {
-	paymentDate?: string
-	initialBalance?: string
-	interestRate?: string
-	annuityPaymentAmount?: string
-	interestAmount?: string
-	principalAmount?: string
-	paymentAmount?: string
-	finalBalance?: string
+	paymentDate: Date
+	initialBalance?: Decimal.Value
+	interestRate?: Decimal.Value
+	interestAmount: Decimal.Value
+	principalAmount?: Decimal.Value
+	paymentAmount: Decimal.Value
+	finalBalance: Decimal.Value
 }
 
-export type LSSchedule = {
-	amount?: string
-	efficientRate?: string
-	fullAmount?: string
-	maxPaymentAmount?: string
-	minPaymentAmount?: string
-	overAllInterest?: string
-	payments?: Array<LSPayment>
+export type LSSchedule<Payment extends LSPayment = LSPayment> = {
+	amount?: Decimal.Value
+	efficientRate?: Decimal.Value
+	fullAmount?: Decimal.Value
+	maxPaymentAmount?: Decimal.Value
+	minPaymentAmount?: Decimal.Value
+	overAllInterest: Decimal.Value
+	payments: Array<Payment>
 	term?: number
 }
 
 export type LSInterestParameters = {
-	from: string
-	to: string
-	amount: string
-	rate: string
+	from: Date
+	to: Date
+	amount: Decimal.Value
+	rate: Decimal.Value
 }
 
 export type LSInterestByPeriodParameters = {
-	from: Moment
-	to: Moment
-	amount: string
-	rate: string
+	from: Date
+	to: Date
+	amount: Decimal.Value
+	rate: Decimal.Value
 }

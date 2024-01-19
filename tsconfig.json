@@ -3,6 +3,7 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "declaration": true,
+    "strictNullChecks": true,
     "moduleResolution": "node",
     "module": "CommonJS",
     "outDir": "./dist/",
