@@ -12,8 +12,6 @@ tsconfig.json
 coverage/
 test/
 .eslintrc.json
-babel.config.json
-jest.config.json
 
 # Git
 .git/
