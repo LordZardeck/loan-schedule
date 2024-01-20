@@ -8,6 +8,13 @@ import {
 	PaymentType,
 } from '../src'
 import { Big } from 'big.js'
+import ProdCal from 'prod-cal'
+
+function isHoliday(date: Date): boolean {
+	const prodCalendar = new ProdCal('ru')
+
+	return prodCalendar.getDay(date.getFullYear(), date.getMonth() + 1, date.getDate()) === ProdCal.DAY_HOLIDAY
+}
 
 describe('Annuity loan schedule', () => {
 	describe('calculate interest for period', () => {
@@ -79,7 +86,7 @@ describe('Annuity loan schedule', () => {
 				issueDate: new Date(2018, 9, 25),
 			},
 			{
-				prodCalendar: 'ru',
+				isHoliday,
 			},
 		)
 
@@ -96,7 +103,7 @@ describe('Annuity loan schedule', () => {
 				issueDate: new Date(2018, 9, 31),
 			},
 			{
-				prodCalendar: 'ru',
+				isHoliday,
 			},
 		)
 

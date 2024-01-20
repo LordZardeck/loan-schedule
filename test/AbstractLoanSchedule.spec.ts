@@ -1,7 +1,6 @@
 import { describe, expect, mock, it } from 'bun:test'
 import {
 	calculateSchedule,
-	createHolidayChecker,
 	generateAnnuityPayments,
 	getPaymentDate,
 	getPaymentDateOnWorkingDay,
@@ -9,6 +8,11 @@ import {
 	ScheduleConfig,
 } from '../src'
 import ProdCal from 'prod-cal'
+function isHoliday(date: Date): boolean {
+	const prodCalendar = new ProdCal('ru')
+
+	return prodCalendar.getDay(date.getFullYear(), date.getMonth() + 1, date.getDate()) === ProdCal.DAY_HOLIDAY
+}
 
 describe('AbstractLoan', () => {
 	it('should add month and closest day', () => {
@@ -16,15 +20,15 @@ describe('AbstractLoan', () => {
 	})
 
 	it('should return payment date as next day after holiday', () => {
-		expect(
-			getPaymentDateOnWorkingDay(new Date(2015, 4, 1), createHolidayChecker(new ProdCal('ru'))).getTime(),
-		).toEqual(new Date(2015, 4, 5).getTime())
+		expect(getPaymentDateOnWorkingDay(new Date(2015, 4, 1), isHoliday).getTime()).toEqual(
+			new Date(2015, 4, 5).getTime(),
+		)
 	})
 
 	it('should return payment date as closet day before holiday if holiday lasts to the end of the month', () => {
-		expect(
-			getPaymentDateOnWorkingDay(new Date(2015, 4, 31), createHolidayChecker(new ProdCal('ru'))).getTime(),
-		).toEqual(new Date(2015, 4, 29).getTime())
+		expect(getPaymentDateOnWorkingDay(new Date(2015, 4, 31), isHoliday).getTime()).toEqual(
+			new Date(2015, 4, 29).getTime(),
+		)
 	})
 
 	describe('printSchedule', () => {

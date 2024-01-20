@@ -1,14 +1,12 @@
 import {
 	calculateInterestByPeriod,
 	calculateSchedule,
-	createHolidayChecker,
 	createInitialPayment,
 	getPaymentDate,
 	getPaymentDateOnWorkingDay,
 } from './AbstractLoanSchedule'
 import { Payment, PaymentType, Schedule, ScheduleConfig, ScheduleOptions, SchedulePoint } from './types'
 import { startOfDay } from 'date-fns'
-import ProdCal from 'prod-cal'
 import { Big, BigSource } from 'big.js'
 
 export type AnnuityPayment = Payment & {
@@ -25,7 +23,7 @@ export type SchedulePlan = {
 
 export function generateAnnuitySchedulePoints(plan: SchedulePlan, options?: ScheduleOptions): SchedulePoint[] {
 	const { regularPaymentAmount, earlyRepayments, issueDate, paymentOnDay, termLength } = plan
-	const isHoliday = options?.prodCalendar ? createHolidayChecker(new ProdCal(options.prodCalendar)) : () => false
+	const { isHoliday = () => false } = options ?? {}
 
 	return Array.from(Array(termLength + 1).keys())
 		.map(Number.call, Number)

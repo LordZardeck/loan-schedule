@@ -2,7 +2,7 @@ import type { BigSource } from 'big.js'
 
 export type ScheduleOptions = {
 	decimalDigit?: number
-	prodCalendar?: string
+	isHoliday?: (date: Date) => boolean
 }
 
 // TODO: Document what each payment type actually does

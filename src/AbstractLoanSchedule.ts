@@ -1,5 +1,4 @@
 import { Big, BigSource } from 'big.js'
-import ProdCal from 'prod-cal'
 import { InterestParameters, Payment, Schedule, ScheduleConfig, ScheduleOptions } from './types'
 import {
 	addDays,
@@ -42,11 +41,6 @@ export function getPaymentDate(issueDate: Date, scheduleMonth: number, paymentDa
 		// If the payment day is not available in the month, then use the last day of the month
 		paymentEndOfMonth.getDate() < paymentDay ? paymentEndOfMonth.getDate() : paymentDay,
 	)
-}
-
-export function createHolidayChecker(prodCalendar: ProdCal) {
-	return (date: Date): boolean =>
-		prodCalendar.getDay(date.getFullYear(), date.getMonth() + 1, date.getDate()) === ProdCal.DAY_HOLIDAY
 }
 
 export function getPaymentDateOnWorkingDay(paymentDate: Date, isHoliday?: (date: Date) => boolean): Date {

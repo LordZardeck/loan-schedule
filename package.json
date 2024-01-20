@@ -29,11 +29,10 @@
   },
   "dependencies": {
     "big.js": "^6.2.1",
-    "date-fns": "^3.2.0",
-    "moment": "^2.29.4",
-    "prod-cal": "^2.0.1"
+    "date-fns": "^3.2.0"
   },
   "devDependencies": {
+    "prod-cal": "^2.0.1",
     "@types/big.js": "^6.2.2",
     "@types/bun": "^1.0.2",
     "@types/jest": "^29.5.0",
