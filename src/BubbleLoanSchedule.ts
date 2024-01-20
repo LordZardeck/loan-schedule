@@ -1,7 +1,7 @@
-import Decimal from 'decimal.js'
 import { calculateInterestByPeriod, calculateSchedule, createInitialPayment } from './AbstractLoanSchedule'
 import { ScheduleOptions, ScheduleConfig, Payment } from './types'
 import { addMonths, setDate, startOfDay } from 'date-fns'
+import { Big } from 'big.js'
 
 export function generateBubblePayments(parameters: ScheduleConfig, options?: ScheduleOptions) {
 	const fixedDecimal = options?.decimalDigit ?? 2
@@ -15,16 +15,15 @@ export function generateBubblePayments(parameters: ScheduleConfig, options?: Sch
 
 			const paymentDate = setDate(addMonths(previousPayment.paymentDate, 1), paymentOnDay)
 			const initialBalance = previousPayment.finalBalance
-			const principalAmount =
-				payments.length === termLength ? initialBalance : new Decimal(0).toFixed(fixedDecimal)
-			const interestAmount = new Decimal(
+			const principalAmount = payments.length === termLength ? initialBalance : Big(0).round(fixedDecimal)
+			const interestAmount = Big(
 				calculateInterestByPeriod({
 					from: previousPayment.paymentDate,
 					to: paymentDate,
 					amount: initialBalance,
-					rate: new Decimal(rate).toFixed(fixedDecimal),
+					rate: Big(rate).round(fixedDecimal),
 				}),
-			).toFixed(fixedDecimal)
+			).round(fixedDecimal)
 
 			return [
 				...payments,
@@ -34,8 +33,8 @@ export function generateBubblePayments(parameters: ScheduleConfig, options?: Sch
 					interestRate: rate,
 					principalAmount,
 					interestAmount,
-					paymentAmount: new Decimal(principalAmount).plus(new Decimal(interestAmount)).toFixed(fixedDecimal),
-					finalBalance: new Decimal(initialBalance).minus(new Decimal(principalAmount)).toFixed(fixedDecimal),
+					paymentAmount: Big(principalAmount).plus(Big(interestAmount)).round(fixedDecimal),
+					finalBalance: Big(initialBalance).minus(Big(principalAmount)).round(fixedDecimal),
 				},
 			]
 		},

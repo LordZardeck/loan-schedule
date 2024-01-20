@@ -1,4 +1,3 @@
-import Decimal from 'decimal.js'
 import {
 	calculateInterestByPeriod,
 	calculateSchedule,
@@ -10,16 +9,17 @@ import {
 import { Payment, PaymentType, Schedule, ScheduleConfig, ScheduleOptions, SchedulePoint } from './types'
 import { startOfDay } from 'date-fns'
 import ProdCal from 'prod-cal'
+import { Big, BigSource } from 'big.js'
 
 export type AnnuityPayment = Payment & {
-	annuityPaymentAmount: Decimal.Value
+	annuityPaymentAmount: BigSource
 }
 
 export type SchedulePlan = {
 	issueDate: Date
 	paymentOnDay: number
 	termLength: number
-	regularPaymentAmount: Decimal.Value
+	regularPaymentAmount: BigSource
 	earlyRepayments: SchedulePoint[]
 }
 
@@ -52,9 +52,9 @@ export function generateAnnuitySchedulePoints(plan: SchedulePlan, options?: Sche
 export type PaymentGeneratorConfig = {
 	issueDate: Date
 	termLength: number
-	amount: Decimal.Value
-	rate: Decimal.Value
-	paymentAmount?: Decimal.Value
+	amount: BigSource
+	rate: BigSource
+	paymentAmount?: BigSource
 }
 
 export type PaymentGeneratorConfigWithSchedulePoints = PaymentGeneratorConfig & {
@@ -73,7 +73,7 @@ export type AnnuityPaymentsParameters =
 export function generateAnnuityPayments(parameters: AnnuityPaymentsParameters, options?: ScheduleOptions) {
 	const fixedDecimal = options?.decimalDigit ?? 2
 	const { issueDate, termLength, amount, rate, paymentAmount } = parameters
-	let interestAccruedAmount = new Decimal(0)
+	let interestAccruedAmount = Big(0)
 
 	const payments: Array<AnnuityPayment> = [
 		{
@@ -91,7 +91,7 @@ export function generateAnnuityPayments(parameters: AnnuityPaymentsParameters, o
 						earlyRepayments: parameters.earlyRepayments ?? [],
 						termLength,
 						issueDate,
-						regularPaymentAmount: new Decimal(
+						regularPaymentAmount: Big(
 							paymentAmount ||
 								calculateAnnuityPaymentAmount(
 									{
@@ -107,17 +107,14 @@ export function generateAnnuityPayments(parameters: AnnuityPaymentsParameters, o
 			  )
 
 	let currentSchedulePoint = 1
-	let scheduledPaymentAmount = new Decimal(schedulePoints[currentSchedulePoint].paymentAmount)
+	let scheduledPaymentAmount = Big(schedulePoints[currentSchedulePoint].paymentAmount)
 
-	while (
-		currentSchedulePoint < schedulePoints.length &&
-		new Decimal(payments[currentSchedulePoint - 1].finalBalance).gt(0)
-	) {
+	while (currentSchedulePoint < schedulePoints.length && Big(payments[currentSchedulePoint - 1].finalBalance).gt(0)) {
 		const pay: AnnuityPayment = {} as AnnuityPayment
 
 		pay.paymentDate = schedulePoints[currentSchedulePoint].paymentDate
 		pay.initialBalance = payments[currentSchedulePoint - 1].finalBalance
-		pay.interestRate = new Decimal(rate).toFixed(fixedDecimal)
+		pay.interestRate = Big(rate).toFixed(fixedDecimal)
 		pay.annuityPaymentAmount = calculateAnnuityPaymentAmount(
 			{
 				amount: pay.initialBalance,
@@ -128,9 +125,9 @@ export function generateAnnuityPayments(parameters: AnnuityPaymentsParameters, o
 		)
 
 		if (schedulePoints[currentSchedulePoint].paymentType !== PaymentType.ER_TYPE_REGULAR) {
-			scheduledPaymentAmount = new Decimal(schedulePoints[currentSchedulePoint].paymentAmount)
+			scheduledPaymentAmount = Big(schedulePoints[currentSchedulePoint].paymentAmount)
 		} else if (schedulePoints[currentSchedulePoint - 1].paymentType !== PaymentType.ER_TYPE_REGULAR) {
-			scheduledPaymentAmount = new Decimal(paymentAmount || pay.annuityPaymentAmount)
+			scheduledPaymentAmount = Big(paymentAmount || pay.annuityPaymentAmount)
 		}
 
 		interestAccruedAmount = interestAccruedAmount.plus(
@@ -149,26 +146,22 @@ export function generateAnnuityPayments(parameters: AnnuityPaymentsParameters, o
 					interestAccruedAmount = interestAccruedAmount.minus(scheduledPaymentAmount)
 				} else {
 					pay.interestAmount = interestAccruedAmount.toFixed(fixedDecimal)
-					interestAccruedAmount = new Decimal(0)
+					interestAccruedAmount = Big(0)
 				}
-				pay.principalAmount = new Decimal(scheduledPaymentAmount)
-					.minus(new Decimal(pay.interestAmount))
-					.toFixed(fixedDecimal)
+				pay.principalAmount = Big(scheduledPaymentAmount).minus(Big(pay.interestAmount)).toFixed(fixedDecimal)
 				pay.paymentAmount = scheduledPaymentAmount.toFixed(fixedDecimal)
 			} else {
 				pay.interestAmount = interestAccruedAmount.toFixed(fixedDecimal)
 				pay.principalAmount = pay.initialBalance
-				pay.paymentAmount = new Decimal(pay.principalAmount)
-					.plus(new Decimal(pay.interestAmount))
-					.toFixed(fixedDecimal)
+				pay.paymentAmount = Big(pay.principalAmount).plus(Big(pay.interestAmount)).toFixed(fixedDecimal)
 			}
 		} else {
 			pay.principalAmount = scheduledPaymentAmount.toFixed(fixedDecimal)
 			pay.paymentAmount = scheduledPaymentAmount.toFixed(fixedDecimal)
-			pay.interestAmount = new Decimal(0).toFixed(fixedDecimal)
+			pay.interestAmount = Big(0).toFixed(fixedDecimal)
 		}
 
-		pay.finalBalance = new Decimal(pay.initialBalance).minus(new Decimal(pay.principalAmount)).toFixed(fixedDecimal)
+		pay.finalBalance = Big(pay.initialBalance).minus(Big(pay.principalAmount)).toFixed(fixedDecimal)
 
 		payments.push(pay)
 		currentSchedulePoint++
@@ -216,24 +209,30 @@ export function calculateAnnuityLoanSchedule(parameters: ScheduleConfig, options
 export function calculateAnnuityPaymentAmount(
 	parameters: Required<Pick<ScheduleConfig, 'termLength' | 'rate' | 'amount'>>,
 	options?: ScheduleOptions,
-): Decimal.Value {
+): BigSource {
 	const fixedDecimal = options?.decimalDigit ?? 2
-	const term = new Decimal(parameters.termLength)
-	const interestRate = new Decimal(parameters.rate).div(100).div(12)
+	const term = Big(parameters.termLength)
+	const interestRate = Big(parameters.rate).div(100).div(12)
 
-	return new Decimal(parameters.amount)
-		.mul(interestRate.div(interestRate.plus(1).pow(term.neg()).neg().plus(1)))
-		.toFixed(fixedDecimal)
+	const multiplier = interestRate.plus(1).pow(term.neg().toNumber()).neg().plus(1)
+
+	if (multiplier.eq(0)) return Infinity
+
+	return Big(parameters.amount)
+		.mul(interestRate.div(interestRate.plus(1).pow(term.neg().toNumber()).neg().plus(1)))
+		.round(fixedDecimal)
 }
 
 export function calculateMaxLoanAmount(
 	parameters: Required<Pick<ScheduleConfig, 'termLength' | 'rate' | 'paymentAmount'>>,
 	options?: ScheduleOptions,
-): Decimal.Value {
+): BigSource {
 	const fixedDecimal = options?.decimalDigit ?? 2
-	const term = new Decimal(parameters.termLength)
-	const interestRate = new Decimal(parameters.rate).div(100).div(12)
-	const paymentAmount = new Decimal(parameters.paymentAmount)
+	const term = Big(parameters.termLength)
+	const interestRate = Big(parameters.rate).div(100).div(12)
+	const paymentAmount = Big(parameters.paymentAmount)
 
-	return paymentAmount.div(interestRate.div(interestRate.plus(1).pow(term.neg()).neg().plus(1))).toFixed(fixedDecimal)
+	return paymentAmount
+		.div(interestRate.div(interestRate.plus(1).pow(term.neg().toNumber()).neg().plus(1)))
+		.toFixed(fixedDecimal)
 }

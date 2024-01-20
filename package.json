@@ -28,12 +28,13 @@
     "url": "https://github.com/LordZardeck/loan-schedule/issues"
   },
   "dependencies": {
+    "big.js": "^6.2.1",
     "date-fns": "^3.2.0",
-    "decimal.js": "^10.4.3",
     "moment": "^2.29.4",
     "prod-cal": "^2.0.1"
   },
   "devDependencies": {
+    "@types/big.js": "^6.2.2",
     "@types/bun": "^1.0.2",
     "@types/jest": "^29.5.0",
     "@typescript-eslint/eslint-plugin": "^5.59.6",

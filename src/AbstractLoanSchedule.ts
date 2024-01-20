@@ -1,6 +1,6 @@
-import Decimal from 'decimal.js'
+import { Big, BigSource } from 'big.js'
 import ProdCal from 'prod-cal'
-import { InterestParameters, Payment, PaymentType, Schedule, ScheduleConfig, ScheduleOptions } from './types'
+import { InterestParameters, Payment, Schedule, ScheduleConfig, ScheduleOptions } from './types'
 import {
 	addDays,
 	addMonths,
@@ -13,20 +13,20 @@ import {
 	startOfMonth,
 } from 'date-fns'
 
-export function createInitialPayment(amount: Decimal.Value, paymentDate: Date, rate: Decimal.Value): Payment {
+export function createInitialPayment(amount: BigSource, paymentDate: Date, rate: BigSource): Payment {
 	return {
 		paymentDate,
-		initialBalance: new Decimal(0),
-		paymentAmount: new Decimal(0),
-		interestAmount: new Decimal(0),
-		principalAmount: new Decimal(0),
-		finalBalance: new Decimal(amount),
-		interestRate: new Decimal(rate),
+		initialBalance: new Big(0),
+		paymentAmount: new Big(0),
+		interestAmount: new Big(0),
+		principalAmount: new Big(0),
+		finalBalance: new Big(amount),
+		interestRate: new Big(rate),
 	}
 }
 
-export function getInterestByPeriod({ rate, to, from, amount }: InterestParameters): Decimal {
-	return new Decimal(rate)
+export function getInterestByPeriod({ rate, to, from, amount }: InterestParameters) {
+	return new Big(rate)
 		.div(100)
 		.div(to.getFullYear() % 4 === 0 ? 366 : 365)
 		.mul(differenceInDays(to, from))
@@ -65,18 +65,14 @@ export function getPaymentDateOnWorkingDay(paymentDate: Date, isHoliday?: (date:
 	return paymentDateOnWorkingDay
 }
 
-export function getSchedulePoint(paymentDate: Date, paymentType: PaymentType, paymentAmount: Decimal.Value) {
-	return { paymentDate: getPaymentDateOnWorkingDay(paymentDate), paymentType, paymentAmount }
-}
-
 export function calculateInterestByPeriod(
 	{ amount, rate, from, to }: InterestParameters,
 	options?: ScheduleOptions,
-): Decimal.Value {
+): BigSource {
 	const fixedDecimal = options?.decimalDigit ?? 2
 
 	if (isSameYear(from, to)) {
-		return new Decimal(0)
+		return new Big(0)
 			.plus(
 				getInterestByPeriod({
 					from,
@@ -90,7 +86,7 @@ export function calculateInterestByPeriod(
 
 	const endOfYear = new Date(from.getFullYear(), 11, 31)
 
-	return new Decimal(0)
+	return new Big(0)
 		.plus(
 			getInterestByPeriod({
 				from,
@@ -124,31 +120,32 @@ export function calculateSchedule<P extends Payment = Payment>(
 	if (initialPayment === undefined || firstPayment === undefined || lastPayment === undefined)
 		throw new Error('There must exist at least two payments to apply final calculation')
 
-	const minPaymentAmount = Decimal.min(firstPayment.paymentAmount, lastPayment.paymentAmount).toFixed(fixedDecimal)
-	const maxPaymentAmount = Decimal.max(firstPayment.paymentAmount, lastPayment.paymentAmount).toFixed(fixedDecimal)
+	const [minPaymentAmount, maxPaymentAmount] = Big(firstPayment.paymentAmount).lt(Big(lastPayment.paymentAmount))
+		? [Big(firstPayment.paymentAmount).round(fixedDecimal), Big(lastPayment.paymentAmount).round(fixedDecimal)]
+		: [Big(lastPayment.paymentAmount).round(fixedDecimal), Big(firstPayment.paymentAmount).round(fixedDecimal)]
 
 	const dateStart = setDate(startOfDay(initialPayment.paymentDate), 1)
 	const dateEnd = setDate(startOfDay(lastPayment.paymentDate), 1)
 
 	const termLength = differenceInMonths(dateEnd, dateStart)
 
-	const amount = new Decimal(parameters.amount).toFixed(fixedDecimal)
+	const amount = Big(parameters.amount).round(fixedDecimal)
 	const overAllInterest = schedulePayments.reduce(
-		(overAllInterest, pay) => new Decimal(overAllInterest).plus(pay.interestAmount).toFixed(fixedDecimal),
-		new Decimal(0).toFixed(fixedDecimal),
+		(overAllInterest, pay) => overAllInterest.plus(pay.interestAmount).round(fixedDecimal),
+		Big(0).round(fixedDecimal),
 	)
 
-	const efficientRate = new Decimal(overAllInterest).div(amount).mul(100).toFixed(fixedDecimal)
-	const fullAmount = new Decimal(overAllInterest).add(amount).toFixed(fixedDecimal)
+	const efficientRate = Big(overAllInterest).div(amount).mul(100).round(fixedDecimal)
+	const fullAmount = Big(overAllInterest).add(amount).round(fixedDecimal)
 
 	return {
-		minPaymentAmount: new Decimal(minPaymentAmount).toNumber(),
-		maxPaymentAmount: new Decimal(maxPaymentAmount).toNumber(),
+		minPaymentAmount: Big(minPaymentAmount).toNumber(),
+		maxPaymentAmount: Big(maxPaymentAmount).toNumber(),
 		termLength,
-		amount: new Decimal(amount).toNumber(),
-		overAllInterest: new Decimal(overAllInterest).toNumber(),
-		efficientRate: new Decimal(efficientRate).toNumber(),
-		fullAmount: new Decimal(fullAmount).toNumber(),
+		amount: Big(amount).toNumber(),
+		overAllInterest: Big(overAllInterest).toNumber(),
+		efficientRate: Big(efficientRate).toNumber(),
+		fullAmount: Big(fullAmount).toNumber(),
 		payments: schedulePayments,
 	}
 }
