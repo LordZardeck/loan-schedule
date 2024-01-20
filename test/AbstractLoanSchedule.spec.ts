@@ -36,7 +36,7 @@ describe('AbstractLoan', () => {
 					overAllInterest: 0,
 					amount: 0,
 					fullAmount: 0,
-					term: 0,
+					termLength: 0,
 					minPaymentAmount: 0,
 					maxPaymentAmount: 0,
 					payments: [],
@@ -55,7 +55,7 @@ describe('AbstractLoan', () => {
 					{
 						amount: 500000,
 						rate: 11.5,
-						term: 12,
+						termLength: 12,
 						paymentOnDay: 25,
 						issueDate: new Date(2018, 9, 25),
 					},
@@ -69,50 +69,48 @@ describe('AbstractLoan', () => {
 				const config: ScheduleConfig = {
 					amount: 26000,
 					rate: 18,
-					term: 60,
+					termLength: 60,
 					paymentOnDay: 25,
 					issueDate: new Date(2018, 9, 25),
 				}
 				const schedule = calculateSchedule(config, generateAnnuityPayments(config))
-				expect(schedule.term).toEqual(60)
+				expect(schedule.termLength).toEqual(60)
 			})
 			it('when no payment amount is specified and date has time', () => {
 				const config: ScheduleConfig = {
 					amount: 26000,
 					rate: 18,
-					term: 60,
+					termLength: 60,
 					paymentOnDay: 25,
 					issueDate: new Date(2018, 9, 25, 6, 0, 0),
 				}
 				const schedule = calculateSchedule(config, generateAnnuityPayments(config))
-				expect(schedule.term).toEqual(60)
+				expect(schedule.termLength).toEqual(60)
 			})
 
 			it('when payment amount is specified', () => {
 				const config: ScheduleConfig = {
 					amount: 26000,
 					rate: 18,
-					term: 60,
+					termLength: 60,
 					paymentOnDay: 22,
 					paymentAmount: 660.23,
 					issueDate: new Date(2024, 0, 22),
-					earlyRepayment: [],
 				}
 				const schedule = calculateSchedule(config, generateAnnuityPayments(config))
-				expect(schedule.term).toEqual(60)
+				expect(schedule.termLength).toEqual(60)
 			})
 			it('when payment amount is specified and date has time', () => {
 				const config: ScheduleConfig = {
 					amount: 26000,
 					rate: 18,
-					term: 60,
+					termLength: 60,
 					paymentOnDay: 22,
 					paymentAmount: 660.23,
 					issueDate: new Date(2024, 0, 22, 6, 0, 0),
-					earlyRepayment: [],
 				}
 				const schedule = calculateSchedule(config, generateAnnuityPayments(config))
-				expect(schedule.term).toEqual(60)
+				expect(schedule.termLength).toEqual(60)
 			})
 		})
 	})

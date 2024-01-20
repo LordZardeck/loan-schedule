@@ -5,9 +5,9 @@ import { addMonths, setDate, startOfDay } from 'date-fns'
 
 export function generateBubblePayments(parameters: ScheduleConfig, options?: ScheduleOptions) {
 	const fixedDecimal = options?.decimalDigit ?? 2
-	const { issueDate, term, amount, rate, paymentOnDay } = parameters
+	const { issueDate, termLength, amount, rate, paymentOnDay } = parameters
 
-	return Array.from<Payment>({ length: term }).reduce(
+	return Array.from<Payment>({ length: termLength }).reduce(
 		(payments) => {
 			const previousPayment = payments.at(-1)
 
@@ -15,7 +15,8 @@ export function generateBubblePayments(parameters: ScheduleConfig, options?: Sch
 
 			const paymentDate = setDate(addMonths(previousPayment.paymentDate, 1), paymentOnDay)
 			const initialBalance = previousPayment.finalBalance
-			const principalAmount = payments.length === term ? initialBalance : new Decimal(0).toFixed(fixedDecimal)
+			const principalAmount =
+				payments.length === termLength ? initialBalance : new Decimal(0).toFixed(fixedDecimal)
 			const interestAmount = new Decimal(
 				calculateInterestByPeriod({
 					from: previousPayment.paymentDate,

@@ -12,20 +12,20 @@ export enum PaymentType {
 	ER_TYPE_REGULAR,
 }
 
-export type EarlyRepayment = {
+export type SchedulePoint = {
 	paymentDate: Date
-	type: PaymentType
-	amount: Decimal.Value
+	paymentType: PaymentType
+	paymentAmount: Decimal.Value
 }
 
 export type ScheduleConfig = {
 	amount: Decimal.Value
 	issueDate: Date
-	term: number
+	termLength: number
 	rate: Decimal.Value
 	paymentOnDay: number
 	paymentAmount?: Decimal.Value
-	earlyRepayment?: EarlyRepayment[]
+	earlyRepayments?: SchedulePoint[]
 }
 
 export type Payment = {
@@ -46,7 +46,7 @@ export type Schedule<P extends Payment = Payment> = {
 	minPaymentAmount: number
 	overAllInterest: number
 	payments: Array<P>
-	term: number
+	termLength: number
 }
 
 export type InterestParameters = {

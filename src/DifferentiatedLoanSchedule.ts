@@ -5,10 +5,10 @@ import { addMonths, setDate, startOfDay } from 'date-fns'
 
 export function generateDifferentiatedPayments(parameters: ScheduleConfig, options?: ScheduleOptions) {
 	const fixedDecimal = options?.decimalDigit ?? 2
-	const { issueDate, term, amount, rate, paymentOnDay } = parameters
+	const { issueDate, termLength, amount, rate, paymentOnDay } = parameters
 
-	const fixedPartOfPayment = new Decimal(amount).div(term).toFixed(fixedDecimal)
-	return Array.from<Payment>({ length: term }).reduce(
+	const fixedPartOfPayment = new Decimal(amount).div(termLength).toFixed(fixedDecimal)
+	return Array.from<Payment>({ length: termLength }).reduce(
 		(payments) => {
 			const previousPayment = payments.at(-1)
 
@@ -16,7 +16,7 @@ export function generateDifferentiatedPayments(parameters: ScheduleConfig, optio
 
 			const paymentDate = setDate(addMonths(previousPayment.paymentDate, 1), paymentOnDay)
 			const initialBalance = previousPayment.finalBalance
-			const principalAmount = payments.length === term ? initialBalance : fixedPartOfPayment
+			const principalAmount = payments.length === termLength ? initialBalance : fixedPartOfPayment
 			const interestAmount = new Decimal(
 				calculateInterestByPeriod({
 					from: previousPayment.paymentDate,

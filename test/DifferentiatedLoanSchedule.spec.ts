@@ -7,7 +7,7 @@ describe('Differentiated Loan Schedule should', () => {
 		const schedule = calculateDifferentiatedLoanSchedule({
 			amount: 50000,
 			rate: 11.5,
-			term: 12,
+			termLength: 12,
 			paymentOnDay: 25,
 			issueDate: new Date(2016, 9, 25),
 		})

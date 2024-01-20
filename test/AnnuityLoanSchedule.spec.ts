@@ -41,7 +41,7 @@ describe('Annuity loan schedule', () => {
 	test('with params($110000/60m/12.9%) has payment amount eq 2497.21', () => {
 		const paymentAmount = calculateAnnuityPaymentAmount({
 			amount: 110000,
-			term: 60,
+			termLength: 60,
 			rate: 12.9,
 		})
 
@@ -50,7 +50,7 @@ describe('Annuity loan schedule', () => {
 	test('with params($2497.21/60m/12.9%) has max amount eq 109999.97', () => {
 		const maxAmount = calculateMaxLoanAmount({
 			paymentAmount: 2497.21,
-			term: 60,
+			termLength: 60,
 			rate: 12.9,
 		})
 
@@ -61,7 +61,7 @@ describe('Annuity loan schedule', () => {
 		const schedule = calculateAnnuityLoanSchedule({
 			amount: 500000,
 			rate: 11.5,
-			term: 12,
+			termLength: 12,
 			paymentOnDay: 25,
 			issueDate: new Date(2018, 9, 25),
 		})
@@ -74,7 +74,7 @@ describe('Annuity loan schedule', () => {
 			{
 				amount: 500000,
 				rate: 11.5,
-				term: 12,
+				termLength: 12,
 				paymentOnDay: 25,
 				issueDate: new Date(2018, 9, 25),
 			},
@@ -91,7 +91,7 @@ describe('Annuity loan schedule', () => {
 			{
 				amount: 500000,
 				rate: 11.5,
-				term: 12,
+				termLength: 12,
 				paymentOnDay: 31,
 				issueDate: new Date(2018, 9, 31),
 			},
@@ -107,7 +107,7 @@ describe('Annuity loan schedule', () => {
 		const schedule = calculateAnnuityLoanSchedule({
 			amount: 500000,
 			rate: 11.5,
-			term: 24,
+			termLength: 24,
 			paymentAmount: 30000,
 			paymentOnDay: 28,
 			issueDate: new Date(2016, 9, 1),
@@ -127,7 +127,7 @@ describe('Annuity loan schedule', () => {
 			parameters = {
 				amount: 500000,
 				rate: 11.5,
-				term: 12,
+				termLength: 12,
 				paymentOnDay: 25,
 				issueDate: new Date(2016, 9, 25),
 			}
@@ -137,10 +137,10 @@ describe('Annuity loan schedule', () => {
 			const schedule = calculateAnnuityLoanSchedule({
 				...parameters,
 				paymentAmount: 50000,
-				earlyRepayment: [
+				earlyRepayments: [
 					{
-						type: PaymentType.ER_TYPE_MATURITY,
-						amount: 50000,
+						paymentType: PaymentType.ER_TYPE_MATURITY,
+						paymentAmount: 50000,
 						paymentDate: new Date(2016, 11, 25),
 					},
 				],
@@ -152,10 +152,10 @@ describe('Annuity loan schedule', () => {
 		test('at 25.12.2016 and has total interest eq 27155.13', () => {
 			const schedule = calculateAnnuityLoanSchedule({
 				...parameters,
-				earlyRepayment: [
+				earlyRepayments: [
 					{
-						type: PaymentType.ER_TYPE_MATURITY,
-						amount: 50000,
+						paymentType: PaymentType.ER_TYPE_MATURITY,
+						paymentAmount: 50000,
 						paymentDate: new Date(2016, 11, 25),
 					},
 				],
@@ -168,10 +168,10 @@ describe('Annuity loan schedule', () => {
 			const schedule = calculateAnnuityLoanSchedule({
 				...parameters,
 				paymentAmount: 50000,
-				earlyRepayment: [
+				earlyRepayments: [
 					{
-						type: PaymentType.ER_TYPE_MATURITY,
-						amount: 50000,
+						paymentType: PaymentType.ER_TYPE_MATURITY,
+						paymentAmount: 50000,
 						paymentDate: new Date(2016, 11, 12),
 					},
 				],
@@ -183,10 +183,10 @@ describe('Annuity loan schedule', () => {
 		test('at 12.12.2016 and has total interest eq 8545.27', () => {
 			const schedule = calculateAnnuityLoanSchedule({
 				...parameters,
-				earlyRepayment: [
+				earlyRepayments: [
 					{
-						type: PaymentType.ER_TYPE_MATURITY,
-						amount: 440000,
+						paymentType: PaymentType.ER_TYPE_MATURITY,
+						paymentAmount: 440000,
 						paymentDate: new Date(2016, 11, 12),
 					},
 				],

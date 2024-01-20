@@ -130,7 +130,7 @@ export function calculateSchedule<P extends Payment = Payment>(
 	const dateStart = setDate(startOfDay(initialPayment.paymentDate), 1)
 	const dateEnd = setDate(startOfDay(lastPayment.paymentDate), 1)
 
-	const term = differenceInMonths(dateEnd, dateStart)
+	const termLength = differenceInMonths(dateEnd, dateStart)
 
 	const amount = new Decimal(parameters.amount).toFixed(fixedDecimal)
 	const overAllInterest = schedulePayments.reduce(
@@ -144,7 +144,7 @@ export function calculateSchedule<P extends Payment = Payment>(
 	return {
 		minPaymentAmount: new Decimal(minPaymentAmount).toNumber(),
 		maxPaymentAmount: new Decimal(maxPaymentAmount).toNumber(),
-		term,
+		termLength,
 		amount: new Decimal(amount).toNumber(),
 		overAllInterest: new Decimal(overAllInterest).toNumber(),
 		efficientRate: new Decimal(efficientRate).toNumber(),
@@ -156,7 +156,14 @@ export function calculateSchedule<P extends Payment = Payment>(
 export function printSchedule(schedule: Schedule, printFunction: (message: string) => void) {
 	const pf = printFunction || console.log
 
-	pf('Payment = {' + schedule.minPaymentAmount + ', ' + schedule.maxPaymentAmount + '}, Term = ' + schedule.term)
+	pf(
+		'Payment = {' +
+			schedule.minPaymentAmount +
+			', ' +
+			schedule.maxPaymentAmount +
+			'}, Term = ' +
+			schedule.termLength,
+	)
 	pf('OverallInterest = ' + schedule.overAllInterest + ' , EfficientRate = ' + schedule.efficientRate)
 
 	schedule.payments?.forEach((pay) => {
