@@ -1,6 +1,6 @@
 {
   "name": "loan-schedule",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Library for loan amortization schedule manipulation",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -27,7 +27,7 @@
   "bugs": {
     "url": "https://github.com/LordZardeck/loan-schedule/issues"
   },
-  "dependencies": {
+  "peerDependencies": {
     "big.js": "^6.2.1",
     "date-fns": "^3.2.0"
   },
