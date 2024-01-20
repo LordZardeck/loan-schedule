@@ -7,11 +7,14 @@ node_modules/
 # Sources & Build
 src/
 tsconfig.json
+build.ts
+bun.lockb
 
 # Test & Coverage
 coverage/
 test/
 .eslintrc.json
+.prettierrc
 
 # Git
 .git/
