@@ -1,4 +1,4 @@
-import type { BigSource } from 'big.js'
+import type Decimal from 'decimal.js'
 
 export type ScheduleOptions = {
 	decimalDigit?: number
@@ -15,27 +15,27 @@ export enum PaymentType {
 export type SchedulePoint = {
 	paymentDate: Date
 	paymentType: PaymentType
-	paymentAmount: BigSource
+	paymentAmount: Decimal.Value
 }
 
 export type ScheduleConfig = {
-	amount: BigSource
+	amount: Decimal.Value
 	issueDate: Date
 	termLength: number
-	rate: BigSource
+	rate: Decimal.Value
 	paymentOnDay: number
-	paymentAmount?: BigSource
+	paymentAmount?: Decimal.Value
 	earlyRepayments?: SchedulePoint[]
 }
 
 export type Payment = {
 	paymentDate: Date
-	initialBalance?: BigSource
-	interestRate?: BigSource
-	interestAmount: BigSource
-	principalAmount?: BigSource
-	paymentAmount: BigSource
-	finalBalance: BigSource
+	initialBalance?: Decimal.Value
+	interestRate?: Decimal.Value
+	interestAmount: Decimal.Value
+	principalAmount?: Decimal.Value
+	paymentAmount: Decimal.Value
+	finalBalance: Decimal.Value
 }
 
 export type Schedule<P extends Payment = Payment> = {
@@ -52,6 +52,6 @@ export type Schedule<P extends Payment = Payment> = {
 export type InterestParameters = {
 	from: Date
 	to: Date
-	amount: BigSource
-	rate: BigSource
+	amount: Decimal.Value
+	rate: Decimal.Value
 }

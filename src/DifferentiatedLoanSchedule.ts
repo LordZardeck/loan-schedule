@@ -1,13 +1,13 @@
 import { calculateInterestByPeriod, calculateSchedule, createInitialPayment } from './AbstractLoanSchedule'
 import { ScheduleOptions, ScheduleConfig, Payment } from './types'
 import { addMonths, setDate, startOfDay } from 'date-fns'
-import { Big } from 'big.js'
+import Decimal from 'decimal.js'
 
 export function generateDifferentiatedPayments(parameters: ScheduleConfig, options?: ScheduleOptions) {
 	const fixedDecimal = options?.decimalDigit ?? 2
 	const { issueDate, termLength, amount, rate, paymentOnDay } = parameters
 
-	const fixedPartOfPayment = Big(amount).div(termLength).round(fixedDecimal)
+	const fixedPartOfPayment = new Decimal(amount).div(termLength).toFixed(fixedDecimal)
 	return Array.from<Payment>({ length: termLength }).reduce(
 		(payments) => {
 			const previousPayment = payments.at(-1)
@@ -17,14 +17,14 @@ export function generateDifferentiatedPayments(parameters: ScheduleConfig, optio
 			const paymentDate = setDate(addMonths(previousPayment.paymentDate, 1), paymentOnDay)
 			const initialBalance = previousPayment.finalBalance
 			const principalAmount = payments.length === termLength ? initialBalance : fixedPartOfPayment
-			const interestAmount = Big(
+			const interestAmount = new Decimal(
 				calculateInterestByPeriod({
 					from: previousPayment.paymentDate,
 					to: paymentDate,
 					amount: initialBalance,
 					rate,
 				}),
-			).round(fixedDecimal)
+			).toFixed(fixedDecimal)
 
 			return [
 				...payments,
@@ -34,8 +34,8 @@ export function generateDifferentiatedPayments(parameters: ScheduleConfig, optio
 					interestRate: rate,
 					principalAmount,
 					interestAmount,
-					paymentAmount: Big(principalAmount).plus(Big(interestAmount)).round(fixedDecimal),
-					finalBalance: Big(initialBalance).minus(Big(principalAmount)).round(fixedDecimal),
+					paymentAmount: new Decimal(principalAmount).plus(new Decimal(interestAmount)).toFixed(fixedDecimal),
+					finalBalance: new Decimal(initialBalance).minus(new Decimal(principalAmount)).toFixed(fixedDecimal),
 				},
 			]
 		},

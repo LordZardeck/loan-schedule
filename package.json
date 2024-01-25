@@ -27,9 +27,9 @@
   "bugs": {
     "url": "https://github.com/LordZardeck/loan-schedule/issues"
   },
-  "dependencies": {
-    "big.js": "^6.2.1",
-    "date-fns": "^3.2.0"
+  "peerDependencies": {
+    "date-fns": "^3.2.0",
+    "decimal.js": "^10.4.3"
   },
   "devDependencies": {
     "prod-cal": "^2.0.1",
